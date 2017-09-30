@@ -31,7 +31,7 @@ public class IndexController {
 		InputStreamReader stdISR = null;
 		InputStreamReader errISR = null;
 		Process process = null;
-		String command = "~/shell/deploy_pro_xcx.sh";
+		String command = "/root/shell/deploy_pro_xcx.sh";
 		try {
 			process = Runtime.getRuntime().exec(command);
 			process.waitFor();
