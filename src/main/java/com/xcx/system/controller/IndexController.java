@@ -3,17 +3,31 @@ package com.xcx.system.controller;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.xcx.system.model.LoveMemory;
+import com.xcx.system.util.IdGenerator;
 import com.xiaoleilu.hutool.crypto.SecureUtil;
 import com.xiaoleilu.hutool.util.StrUtil;
 
@@ -22,6 +36,9 @@ import com.xiaoleilu.hutool.util.StrUtil;
 public class IndexController {
 
 	private static final String TOKEN = "wxa759517f581d48e8";
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	@RequestMapping("/")
 	@ResponseBody
@@ -46,16 +63,10 @@ public class IndexController {
 		if (StrUtil.isBlank(nonce)) {
 			return "nonce is blank";
 		}
-
 		String[] str = { TOKEN, timestamp, nonce };
 		Arrays.sort(str); // 字典序排序
 		String bigStr = str[0] + str[1] + str[2];
-
-		System.out.println(bigStr);
 		String digest = SecureUtil.sha1(bigStr);
-		System.out.println(digest);
-		System.out.println(signature);
-		System.out.println(echostr);
 		// 确认请求来至微信
 		if (digest.equals(signature)) {
 			return echostr;
@@ -63,13 +74,213 @@ public class IndexController {
 		return "err";
 	}
 
+	/**
+	 * 通过ID获取数据
+	 * 
+	 * @param id
+	 * @return
+	 */
 	@RequestMapping("/data")
 	@ResponseBody
-	Map<String, Object> data() {
+	Map<String, Object> data(String id) {
 		Map<String, Object> data = new HashMap<>();
+		data.put("suc", false);
+		if (StrUtil.isBlank(id)) {
+			data.put("msg", "未传入ID");
+			return data;
+		}
+		LoveMemory result = jdbcTemplate.query("select * from tb_love_memory where id=" + id,
+				new ResultSetExtractor<LoveMemory>() {
+					@Override
+					public LoveMemory extractData(ResultSet r) throws SQLException, DataAccessException {
+						return convertObj(r);
+					}
+				});
+
+		if (result == null) {
+			data.put("msg", "无效的ID");
+			return data;
+		}
+
 		data.put("suc", true);
-		data.put("name", "sizhongxia");
+		Map<String, Object> obj = new HashMap<>();
+		obj.put("id", result.getId());
+		obj.put("picDate", convertPicDate(result.getPicDate()));
+		obj.put("picUrl", result.getPicUrl());
+		obj.put("picSize", result.getPicSize());
+		obj.put("descript", result.getDescript());
+		obj.put("preId", result.getPreId());
+		obj.put("nextId", result.getNextId());
+
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		obj.put("createTime", df.format(result.getCreateTime()));
+		obj.put("updateTime", df.format(result.getUpdateTime()));
+		obj.put("nextId", result.getNextId());
+
+		data.put("data", result);
 		return data;
+	}
+
+	@RequestMapping("/save")
+	@ResponseBody
+	Map<String, Object> save(LoveMemory lm) {
+		Map<String, Object> data = new HashMap<>();
+		data.put("suc", false);
+		if (lm == null) {
+			data.put("msg", "未传入数据");
+			return data;
+		}
+
+		if (lm.getPicDate() < 20100101) {
+			data.put("msg", "无效的图片时间");
+			return data;
+		}
+
+		if (StrUtil.isBlank(lm.getPicUrl())) {
+			data.put("msg", "请选择一张图片");
+			return data;
+		}
+
+		if (StrUtil.isBlank(lm.getDescript())) {
+			data.put("msg", "请输入图片描述");
+			return data;
+		}
+
+		String currentId = null;
+		try {
+			currentId = IdGenerator.getIdGenerator().getId().toString();
+		} catch (Exception e) {
+		}
+
+		if (currentId == null) {
+			data.put("msg", "未生成记录ID");
+			return data;
+		}
+
+		lm.setId(currentId);
+
+		LoveMemory pre = jdbcTemplate.query("select * from tb_love_memory where pic_date<" + lm.getPicDate()
+				+ " order by pic_date desc, id asc limit 0,1", new ResultSetExtractor<LoveMemory>() {
+					@Override
+					public LoveMemory extractData(ResultSet r) throws SQLException, DataAccessException {
+						return convertObj(r);
+					}
+				});
+
+		if (pre != null) {
+			String oldPreNextId = pre.getNextId();
+			// 更新Pre
+			jdbcTemplate.update("UPDATE `tb_love_memory` SET `next_id`=\"" + currentId + "\" WHERE `id`=\"" + pre.getId() + "\"");
+
+			lm.setPreId(pre.getId());
+			lm.setNextId(oldPreNextId);
+		} else {
+			lm.setPreId(null);
+			LoveMemory first = jdbcTemplate.query("select * from tb_love_memory where pre_id is null limit 0,1",
+					new ResultSetExtractor<LoveMemory>() {
+						@Override
+						public LoveMemory extractData(ResultSet r) throws SQLException, DataAccessException {
+							return convertObj(r);
+						}
+					});
+			if (first != null) {
+				jdbcTemplate
+						.update("UPDATE `tb_love_memory` SET `pre_id`=\"" + currentId + "\" WHERE `id`=\"" + first.getId() + "\"");
+				lm.setNextId(first.getId());
+			} else {
+				lm.setNextId(null);
+			}
+		}
+
+		jdbcTemplate.update(
+				"INSERT INTO `tb_love_memory` (`id`, `pre_id`, `next_id`, `pic_date`, `pic_url`, `pic_size`, `descript`, `create_time`, `update_time`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				new PreparedStatementSetter() {
+					@Override
+					public void setValues(PreparedStatement ps) throws SQLException {
+						ps.setString(1, lm.getId());
+						ps.setString(2, lm.getPreId());
+						ps.setString(3, lm.getNextId());
+						ps.setInt(4, lm.getPicDate());
+						ps.setString(5, lm.getPicUrl());
+						ps.setLong(6, lm.getPicSize());
+						ps.setString(7, lm.getDescript());
+						ps.setTimestamp(8, new Timestamp((new Date()).getTime()));
+						ps.setTimestamp(9, new Timestamp((new Date()).getTime()));
+					}
+				});
+
+		data.put("suc", true);
+		data.put("id", currentId);
+		return data;
+	}
+
+	@RequestMapping("/update")
+	@ResponseBody
+	Map<String, Object> update(LoveMemory lm) {
+		Map<String, Object> data = new HashMap<>();
+		data.put("suc", false);
+		if (lm == null) {
+			data.put("msg", "未传入数据");
+			return data;
+		}
+
+		if (StrUtil.isBlank(lm.getId())) {
+			data.put("msg", "无效的信息");
+			return data;
+		}
+
+		if (lm.getPicDate() < 20100101) {
+			data.put("msg", "无效的图片时间");
+			return data;
+		}
+
+		if (StrUtil.isBlank(lm.getPicUrl())) {
+			data.put("msg", "请选择一张图片");
+			return data;
+		}
+
+		if (StrUtil.isBlank(lm.getDescript())) {
+			data.put("msg", "请输入图片描述");
+			return data;
+		}
+
+		try {
+			String sql = "UPDATE `tb_love_memory` SET `pic_date`=" + lm.getPicDate() + ", `pic_url`=\"" + lm.getPicUrl()
+					+ "\", `pic_size`=" + lm.getPicSize() + ", `descript`=\"" + lm.getDescript() + "\" WHERE `id`=\""
+					+ lm.getId() + "\"";
+			System.out.println(sql);
+			jdbcTemplate.update(sql);
+			data.put("suc", true);
+			return data;
+		} catch (Exception e) {
+		}
+		data.put("msg", "修改失败");
+		return data;
+	}
+
+	private LoveMemory convertObj(ResultSet r) throws SQLException, DataAccessException {
+		if (r == null || !r.next()) {
+			return null;
+		}
+		LoveMemory lm = new LoveMemory();
+		lm.setId(r.getString("id"));
+		lm.setPreId(r.getString("pre_id"));
+		lm.setNextId(r.getString("next_id"));
+		lm.setPicUrl(r.getString("pic_url"));
+		lm.setPicSize(r.getLong("pic_size"));
+		lm.setPicDate(r.getInt("pic_date"));
+		lm.setDescript(r.getString("descript"));
+		lm.setCreateTime(r.getDate("create_time"));
+		lm.setUpdateTime(r.getDate("update_time"));
+		return lm;
+	}
+
+	private String convertPicDate(int picDate) {
+		String picDateStr = picDate + "";
+		String year = picDateStr.substring(0, 4);
+		String month = picDateStr.substring(4, 6);
+		String day = picDateStr.substring(6, 8);
+		return year + "年" + month + "月" + day + "日";
 	}
 
 	@RequestMapping("/deploy")
