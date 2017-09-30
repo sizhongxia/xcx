@@ -12,13 +12,18 @@ public class IndexController {
 	@RequestMapping("/")
 	@ResponseBody
 	String home() {
-		return "Hello World!";
+		return "Hello World";
 	}
 
 	@RequestMapping("/check")
 	@ResponseBody
 	String check() {
-		return "Check!";
+		return "Check";
 	}
 
+	@RequestMapping("/check2")
+	@ResponseBody
+	String check2() {
+		return "Check2";
+	}
 }
