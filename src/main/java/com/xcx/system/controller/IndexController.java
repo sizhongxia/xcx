@@ -15,4 +15,15 @@ public class IndexController {
 		return "Hello World!";
 	}
 
+	@RequestMapping("/check")
+	@ResponseBody
+	String check() {
+		return "Check!";
+	}
+
+	@RequestMapping("/error")
+	@ResponseBody
+	String error() {
+		return "Error!";
+	}
 }
