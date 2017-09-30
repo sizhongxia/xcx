@@ -22,7 +22,7 @@ public class IndexController {
 	@RequestMapping("/check")
 	@ResponseBody
 	String check() {
-		return "Check";
+		return "Check2";
 	}
 
 	@RequestMapping("/deploy")
