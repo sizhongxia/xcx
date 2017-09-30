@@ -21,9 +21,9 @@ public class IndexController {
 		return "Check";
 	}
 
-	@RequestMapping("/check2")
+	@RequestMapping("/zx")
 	@ResponseBody
 	String check2() {
-		return "Check2";
+		return "Zhongxia";
 	}
 }
