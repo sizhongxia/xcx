@@ -3,26 +3,47 @@ package com.xcx.system.controller;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.xiaoleilu.hutool.crypto.SecureUtil;
+
 @Controller
 @EnableAutoConfiguration
 public class IndexController {
 
+	private static final String TOKEN = "wxa759517f581d48e8";
+
 	@RequestMapping("/")
 	@ResponseBody
-	String home() {
-		return "Hello World";
-	}
+	String home(HttpServletRequest request) {
+		// 微信加密签名
+		String signature = request.getParameter("signature");
+		// 随机字符串
+		String echostr = request.getParameter("echostr");
+		// 时间戳
+		String timestamp = request.getParameter("timestamp");
+		// 随机数
+		String nonce = request.getParameter("nonce");
 
-	@RequestMapping("/check")
-	@ResponseBody
-	String check() {
-		return "Check";
+		String[] str = { TOKEN, timestamp, nonce };
+		Arrays.sort(str); // 字典序排序
+		String bigStr = str[0] + str[1] + str[2];
+
+		String digest = SecureUtil.sha1(bigStr);
+
+		// 确认请求来至微信
+		if (digest.equals(signature)) {
+			return echostr;
+		}
+
+		return "err";
 	}
 
 	@RequestMapping("/deploy")
@@ -52,7 +73,7 @@ public class IndexController {
 				// System.out.println("ERR line:" + line);
 				sb.append(line);
 			}
-			return sb.toString();
+			return "suc - " + sb.toString();
 		} catch (IOException | InterruptedException e) {
 			return e.getMessage();
 		} finally {

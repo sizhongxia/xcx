@@ -13,10 +13,20 @@
 	</parent>
 
 	<dependencies>
+
+		<!-- SpringBoot Web -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+
+		<!-- 提供丰富的Java工具方法 -->
+		<dependency>
+			<groupId>com.xiaoleilu</groupId>
+			<artifactId>hutool</artifactId>
+			<version>2.16.2</version>
+		</dependency>
+
 		<!-- 这里指定打包的时候不再需要tomcat相关的包 -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
