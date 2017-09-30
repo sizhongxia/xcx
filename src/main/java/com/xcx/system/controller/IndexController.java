@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -59,6 +61,15 @@ public class IndexController {
 			return echostr;
 		}
 		return "err";
+	}
+
+	@RequestMapping("/data")
+	@ResponseBody
+	Map<String, Object> data() {
+		Map<String, Object> data = new HashMap<>();
+		data.put("suc", true);
+		data.put("name", "sizhongxia");
+		return data;
 	}
 
 	@RequestMapping("/deploy")
