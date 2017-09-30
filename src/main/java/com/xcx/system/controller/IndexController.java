@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.xiaoleilu.hutool.crypto.SecureUtil;
+import com.xiaoleilu.hutool.util.StrUtil;
 
 @Controller
 @EnableAutoConfiguration
@@ -25,24 +26,38 @@ public class IndexController {
 	String home(HttpServletRequest request) {
 		// 微信加密签名
 		String signature = request.getParameter("signature");
+		if (StrUtil.isBlank(signature)) {
+			return "signature is blank";
+		}
 		// 随机字符串
 		String echostr = request.getParameter("echostr");
+		if (StrUtil.isBlank(echostr)) {
+			return "echostr is blank";
+		}
 		// 时间戳
 		String timestamp = request.getParameter("timestamp");
+		if (StrUtil.isBlank(timestamp)) {
+			return "timestamp is blank";
+		}
 		// 随机数
 		String nonce = request.getParameter("nonce");
+		if (StrUtil.isBlank(nonce)) {
+			return "nonce is blank";
+		}
 
 		String[] str = { TOKEN, timestamp, nonce };
 		Arrays.sort(str); // 字典序排序
 		String bigStr = str[0] + str[1] + str[2];
 
+		System.out.println(bigStr);
 		String digest = SecureUtil.sha1(bigStr);
-
+		System.out.println(digest);
+		System.out.println(signature);
+		System.out.println(echostr);
 		// 确认请求来至微信
 		if (digest.equals(signature)) {
 			return echostr;
 		}
-
 		return "err";
 	}
 
