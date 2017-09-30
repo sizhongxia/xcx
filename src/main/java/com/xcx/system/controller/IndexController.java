@@ -21,9 +21,4 @@ public class IndexController {
 		return "Check!";
 	}
 
-	@RequestMapping("/error")
-	@ResponseBody
-	String error() {
-		return "Error!";
-	}
 }
