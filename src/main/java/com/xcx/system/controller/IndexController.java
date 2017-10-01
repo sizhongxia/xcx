@@ -313,7 +313,7 @@ public class IndexController {
 		String year = picDateStr.substring(0, 4);
 		String month = picDateStr.substring(4, 6);
 		String day = picDateStr.substring(6, 8);
-		return year + " y" + month + " m" + day + " d";
+		return year + "年" + month + "月" + day + "日";
 	}
 
 	@RequestMapping("/deploy")
