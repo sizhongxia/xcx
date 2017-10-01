@@ -1,6 +1,7 @@
 package com.xcx.system.controller;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.PreparedStatement;
@@ -17,6 +18,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,7 +26,9 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.xcx.system.model.LoveMemory;
 import com.xcx.system.util.IdGenerator;
@@ -40,6 +44,8 @@ public class IndexController {
 
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
+	@Value("${upload.dir}")
+	private String uploadDir;
 
 	@RequestMapping("/")
 	@ResponseBody
@@ -151,6 +157,32 @@ public class IndexController {
 		obj.put("updateTime", df.format(result.getUpdateTime()));
 
 		data.put("data", obj);
+		return data;
+	}
+
+	@ResponseBody
+	@RequestMapping("/upload")
+	public Object upload(@RequestParam("file") MultipartFile imgFile) {
+		Map<String, Object> data = new HashMap<>();
+		data.put("suc", false);
+		// 上传图片 //返回ID
+		if (imgFile == null || imgFile.isEmpty()) {
+			data.put("msg", "未选择文件");
+			return data;
+		}
+		try {
+			StringBuilder fileName = IdGenerator.getIdGenerator().getId();
+			File dest = new File(uploadDir + fileName + ".jpg");
+			imgFile.transferTo(dest);
+			data.put("suc", true);
+			data.put("picPath", "https://team-union.com/pics/xcx/" + fileName + ".jpg");
+			data.put("picSize", imgFile.getSize());
+			return data;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		// 上传图片
+		data.put("msg", "上传失败");
 		return data;
 	}
 
