@@ -2,7 +2,9 @@ package com.xcx.system.controller;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -170,16 +172,42 @@ public class IndexController {
 			data.put("msg", "未选择文件");
 			return data;
 		}
+		FileOutputStream fos = null;
+		InputStream is = null;
 		try {
 			StringBuilder fileName = IdGenerator.getIdGenerator().getId();
 			File dest = new File(uploadDir + fileName + ".jpg");
-			imgFile.transferTo(dest);
+
+			is = imgFile.getInputStream();
+			int buffer = 1024;
+			int length = 0;
+			byte[] b = new byte[buffer];
+			fos = new FileOutputStream(dest);
+			while ((length = is.read(b)) != -1) {
+				fos.write(b, 0, length);
+			}
+			
 			data.put("suc", true);
 			data.put("picPath", "https://team-union.com/pics/xcx/" + fileName + ".jpg");
 			data.put("picSize", imgFile.getSize());
 			return data;
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			if (fos != null) {
+				try {
+					fos.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 		// 上传图片
 		data.put("msg", "上传失败");
