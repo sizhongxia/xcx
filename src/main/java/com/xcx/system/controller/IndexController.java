@@ -73,6 +73,50 @@ public class IndexController {
 		}
 		return "err";
 	}
+	
+
+	/**
+	 * 获取第一条的记录
+	 * 
+	 * @param id
+	 * @return
+	 */
+	@RequestMapping("/first")
+	@ResponseBody
+	Map<String, Object> first() {
+		Map<String, Object> data = new HashMap<>();
+		data.put("suc", false);
+		LoveMemory result = jdbcTemplate.query("select * from tb_love_memory where next_id is null limit 0,1",
+				new ResultSetExtractor<LoveMemory>() {
+					@Override
+					public LoveMemory extractData(ResultSet r) throws SQLException, DataAccessException {
+						return convertObj(r);
+					}
+				});
+
+		if (result == null) {
+			data.put("msg", "暂无数据");
+			return data;
+		}
+
+		data.put("suc", true);
+		Map<String, Object> obj = new HashMap<>();
+		obj.put("id", result.getId());
+		obj.put("picDate", convertPicDate(result.getPicDate()));
+		obj.put("picUrl", result.getPicUrl());
+		obj.put("picSize", result.getPicSize());
+		obj.put("descript", result.getDescript());
+		obj.put("preId", result.getPreId());
+		obj.put("nextId", result.getNextId());
+
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		obj.put("createTime", df.format(result.getCreateTime()));
+		obj.put("updateTime", df.format(result.getUpdateTime()));
+
+		data.put("data", result);
+		return data;
+	}
+	
 
 	/**
 	 * 通过ID获取数据
@@ -115,7 +159,6 @@ public class IndexController {
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 		obj.put("createTime", df.format(result.getCreateTime()));
 		obj.put("updateTime", df.format(result.getUpdateTime()));
-		obj.put("nextId", result.getNextId());
 
 		data.put("data", result);
 		return data;
