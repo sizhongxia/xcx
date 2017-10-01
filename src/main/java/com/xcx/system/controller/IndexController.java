@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.xcx.system.model.LoveMemory;
 import com.xcx.system.util.IdGenerator;
+import com.xcx.system.util.PublicUtil;
 import com.xiaoleilu.hutool.crypto.SecureUtil;
 import com.xiaoleilu.hutool.util.StrUtil;
 
@@ -68,7 +69,6 @@ public class IndexController {
 		}
 		return "err";
 	}
-	
 
 	/**
 	 * @param id
@@ -95,7 +95,7 @@ public class IndexController {
 		data.put("suc", true);
 		Map<String, Object> obj = new HashMap<>();
 		obj.put("id", result.getId());
-		obj.put("picDate", convertPicDate(result.getPicDate()));
+		obj.put("picDate", PublicUtil.convertPicDate(result.getPicDate()));
 		obj.put("picUrl", result.getPicUrl());
 		obj.put("picSize", result.getPicSize());
 		obj.put("descript", result.getDescript());
@@ -109,7 +109,6 @@ public class IndexController {
 		data.put("data", result);
 		return data;
 	}
-	
 
 	/**
 	 * @param id
@@ -140,7 +139,7 @@ public class IndexController {
 		data.put("suc", true);
 		Map<String, Object> obj = new HashMap<>();
 		obj.put("id", result.getId());
-		obj.put("picDate", convertPicDate(result.getPicDate()));
+		obj.put("picDate", PublicUtil.convertPicDate(result.getPicDate()));
 		obj.put("picUrl", result.getPicUrl());
 		obj.put("picSize", result.getPicSize());
 		obj.put("descript", result.getDescript());
@@ -203,7 +202,8 @@ public class IndexController {
 
 		if (pre != null) {
 			String oldPreNextId = pre.getNextId();
-			jdbcTemplate.update("UPDATE `tb_love_memory` SET `next_id`=\"" + currentId + "\" WHERE `id`=\"" + pre.getId() + "\"");
+			jdbcTemplate.update(
+					"UPDATE `tb_love_memory` SET `next_id`=\"" + currentId + "\" WHERE `id`=\"" + pre.getId() + "\"");
 
 			lm.setPreId(pre.getId());
 			lm.setNextId(oldPreNextId);
@@ -217,8 +217,8 @@ public class IndexController {
 						}
 					});
 			if (first != null) {
-				jdbcTemplate
-						.update("UPDATE `tb_love_memory` SET `pre_id`=\"" + currentId + "\" WHERE `id`=\"" + first.getId() + "\"");
+				jdbcTemplate.update("UPDATE `tb_love_memory` SET `pre_id`=\"" + currentId + "\" WHERE `id`=\""
+						+ first.getId() + "\"");
 				lm.setNextId(first.getId());
 			} else {
 				lm.setNextId(null);
@@ -306,15 +306,6 @@ public class IndexController {
 		lm.setCreateTime(r.getDate("create_time"));
 		lm.setUpdateTime(r.getDate("update_time"));
 		return lm;
-	}
-
-	private String convertPicDate(int picDate) {
-		String picDateStr = picDate + "";
-		String year = picDateStr.substring(0, 4);
-		String month = picDateStr.substring(4, 6);
-		String day = picDateStr.substring(6, 8);
-		
-		return year + "年" + month + "月" + day + "日";
 	}
 
 	@RequestMapping("/deploy")
