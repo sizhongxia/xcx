@@ -162,7 +162,7 @@ public class IndexController {
 
 	@ResponseBody
 	@RequestMapping("/upload")
-	public Object upload(@RequestParam("file") MultipartFile imgFile) {
+	Map<String, Object> upload(@RequestParam("file") MultipartFile imgFile) {
 		Map<String, Object> data = new HashMap<>();
 		data.put("suc", false);
 		// 上传图片 //返回ID
