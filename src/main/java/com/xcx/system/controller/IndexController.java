@@ -43,31 +43,26 @@ public class IndexController {
 	@RequestMapping("/")
 	@ResponseBody
 	String home(HttpServletRequest request) {
-		// 微信加密签名
 		String signature = request.getParameter("signature");
 		if (StrUtil.isBlank(signature)) {
 			return "signature is blank";
 		}
-		// 随机字符串
 		String echostr = request.getParameter("echostr");
 		if (StrUtil.isBlank(echostr)) {
 			return "echostr is blank";
 		}
-		// 时间戳
 		String timestamp = request.getParameter("timestamp");
 		if (StrUtil.isBlank(timestamp)) {
 			return "timestamp is blank";
 		}
-		// 随机数
 		String nonce = request.getParameter("nonce");
 		if (StrUtil.isBlank(nonce)) {
 			return "nonce is blank";
 		}
 		String[] str = { TOKEN, timestamp, nonce };
-		Arrays.sort(str); // 字典序排序
+		Arrays.sort(str);
 		String bigStr = str[0] + str[1] + str[2];
 		String digest = SecureUtil.sha1(bigStr);
-		// 确认请求来至微信
 		if (digest.equals(signature)) {
 			return echostr;
 		}
@@ -76,8 +71,6 @@ public class IndexController {
 	
 
 	/**
-	 * 获取第一条的记录
-	 * 
 	 * @param id
 	 * @return
 	 */
@@ -95,7 +88,7 @@ public class IndexController {
 				});
 
 		if (result == null) {
-			data.put("msg", "暂无数据");
+			data.put("msg", "no data");
 			return data;
 		}
 
@@ -119,8 +112,6 @@ public class IndexController {
 	
 
 	/**
-	 * 通过ID获取数据
-	 * 
 	 * @param id
 	 * @return
 	 */
@@ -130,7 +121,7 @@ public class IndexController {
 		Map<String, Object> data = new HashMap<>();
 		data.put("suc", false);
 		if (StrUtil.isBlank(id)) {
-			data.put("msg", "未传入ID");
+			data.put("msg", "err id");
 			return data;
 		}
 		LoveMemory result = jdbcTemplate.query("select * from tb_love_memory where id=" + id,
@@ -142,7 +133,7 @@ public class IndexController {
 				});
 
 		if (result == null) {
-			data.put("msg", "无效的ID");
+			data.put("msg", "invalid id");
 			return data;
 		}
 
@@ -170,22 +161,22 @@ public class IndexController {
 		Map<String, Object> data = new HashMap<>();
 		data.put("suc", false);
 		if (lm == null) {
-			data.put("msg", "未传入数据");
+			data.put("msg", "no data");
 			return data;
 		}
 
 		if (lm.getPicDate() < 20100101) {
-			data.put("msg", "无效的图片时间");
+			data.put("msg", "invalid pic date");
 			return data;
 		}
 
 		if (StrUtil.isBlank(lm.getPicUrl())) {
-			data.put("msg", "请选择一张图片");
+			data.put("msg", "please upload a picture");
 			return data;
 		}
 
 		if (StrUtil.isBlank(lm.getDescript())) {
-			data.put("msg", "请输入图片描述");
+			data.put("msg", "no descript");
 			return data;
 		}
 
@@ -196,7 +187,7 @@ public class IndexController {
 		}
 
 		if (currentId == null) {
-			data.put("msg", "未生成记录ID");
+			data.put("msg", "no init id");
 			return data;
 		}
 
@@ -212,7 +203,6 @@ public class IndexController {
 
 		if (pre != null) {
 			String oldPreNextId = pre.getNextId();
-			// 更新Pre
 			jdbcTemplate.update("UPDATE `tb_love_memory` SET `next_id`=\"" + currentId + "\" WHERE `id`=\"" + pre.getId() + "\"");
 
 			lm.setPreId(pre.getId());
@@ -263,27 +253,27 @@ public class IndexController {
 		Map<String, Object> data = new HashMap<>();
 		data.put("suc", false);
 		if (lm == null) {
-			data.put("msg", "未传入数据");
+			data.put("msg", "no req data");
 			return data;
 		}
 
 		if (StrUtil.isBlank(lm.getId())) {
-			data.put("msg", "无效的信息");
+			data.put("msg", "invalid id");
 			return data;
 		}
 
 		if (lm.getPicDate() < 20100101) {
-			data.put("msg", "无效的图片时间");
+			data.put("msg", "invalid picdate");
 			return data;
 		}
 
 		if (StrUtil.isBlank(lm.getPicUrl())) {
-			data.put("msg", "请选择一张图片");
+			data.put("msg", "please upload a picture");
 			return data;
 		}
 
 		if (StrUtil.isBlank(lm.getDescript())) {
-			data.put("msg", "请输入图片描述");
+			data.put("msg", "no descript");
 			return data;
 		}
 
@@ -297,7 +287,7 @@ public class IndexController {
 			return data;
 		} catch (Exception e) {
 		}
-		data.put("msg", "修改失败");
+		data.put("msg", "update err");
 		return data;
 	}
 
@@ -323,7 +313,7 @@ public class IndexController {
 		String year = picDateStr.substring(0, 4);
 		String month = picDateStr.substring(4, 6);
 		String day = picDateStr.substring(6, 8);
-		return year + "年" + month + "月" + day + "日";
+		return year + " y" + month + " m" + day + " d";
 	}
 
 	@RequestMapping("/deploy")
