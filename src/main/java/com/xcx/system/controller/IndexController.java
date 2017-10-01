@@ -106,7 +106,7 @@ public class IndexController {
 		obj.put("createTime", df.format(result.getCreateTime()));
 		obj.put("updateTime", df.format(result.getUpdateTime()));
 
-		data.put("data", result);
+		data.put("data", obj);
 		return data;
 	}
 
@@ -150,7 +150,7 @@ public class IndexController {
 		obj.put("createTime", df.format(result.getCreateTime()));
 		obj.put("updateTime", df.format(result.getUpdateTime()));
 
-		data.put("data", result);
+		data.put("data", obj);
 		return data;
 	}
 
